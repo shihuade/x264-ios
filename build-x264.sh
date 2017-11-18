@@ -12,8 +12,26 @@ SCRATCH="scratch-x264"
 # must be an absolute path
 THIN=`pwd`/"thin-x264"
 
+X264Repos="http://git.videolan.org/git/x264.git"
+
 # the one included in x264 does not work; specify full path to working one
 GAS_PREPROCESSOR=/usr/local/bin/gas-preprocessor.pl
+GASRepos="https://github.com/libav/gas-preprocessor.git"
+
+#check GAS script
+if [ ! -r $GAS_PREPROCESSOR ];then
+    echo 'gas-preprocessor.pl not found. Trying to install...'
+    rm -rf gas-preprocessor
+    git clone ${GASRepos}
+    cp  gas-preprocessor/gas-preprocessor.pl ${GAS_PREPROCESSOR}
+    chmod u+x ${GAS_PREPROCESSOR}
+fi
+
+#check x264
+if [ ! -r ${SOURCE} ]; then
+    echo 'x264 source not found. Trying to download...'
+    git clone ${X264Repos}
+fi
 
 COMPILE="y"
 LIPO="y"
@@ -79,9 +97,11 @@ then
 		else
 		    export -n AS
 		fi
+
 		CXXFLAGS="$CFLAGS"
 		LDFLAGS="$CFLAGS"
 
+        cd  $CWD/$SOURCE
 		CC=$CC $CWD/$SOURCE/configure \
 		    $CONFIGURE_FLAGS \
 		    $HOST \
@@ -89,7 +109,6 @@ then
 		    --extra-asflags="$ASFLAGS" \
 		    --extra-ldflags="$LDFLAGS" \
 		    --prefix="$THIN/$ARCH" || exit 1
-
 		mkdir extras
 		ln -s $GAS_PREPROCESSOR extras
 
@@ -114,3 +133,4 @@ then
 	cd $CWD
 	cp -rf $THIN/$1/include $FAT
 fi
+
